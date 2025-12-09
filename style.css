@@ -1,0 +1,85 @@
+body{
+    margin: 0;
+    padding: 0;
+    background-color: rgb(226, 192, 147);
+}
+header{
+    height: 100px;
+    width: 100%;
+    background-color: rgb(141, 171, 198);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.burger-menu{
+    display: none;
+}
+header img{
+    height: 50px;
+    width: 50px;
+    border-radius: 20px;
+    margin: auto;
+}
+header a{
+    margin: auto;
+}
+#Hero{
+    height: 500px;
+    width: 100%;
+    background-image: url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSf-MuVMWA1zQsl0Jk5WyFdcIjdtlT24N7UIg&s);
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: aliceblue;
+}
+.grid {
+    display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+     transition: transform 1s ease-in-out;
+}
+
+.card {
+    background: rgb(180, 179, 179);
+    padding: 20px;
+    border-radius: 10px;
+    
+}
+.card img{
+    border-radius: 10px;
+    height: 200px;
+    width: 250px;
+}
+.grid :hover{
+    transform: scale(1.2);
+}
+footer{
+    background-color: black;
+    color: aliceblue;
+    height: 200px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+@media(max-width: 768px){
+    
+    header {
+        justify-content: space-between;
+    }
+
+    header img {
+        margin: 0;
+    }
+
+    .burger-menu {
+        display: block;
+    }
+
+    header a {
+        display: none;
+    }
+}
