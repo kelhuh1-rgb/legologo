@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Адаптивті мәтін және кескіндерді жалқау жүктеу</title>
+  <style>
+    
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 0; padding: 1.5rem; line-height: 1.5; }
+    header { margin-bottom: 1rem; }
+
+    
+    .card { border: 1px solid #e6e6e6; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+
+    
+    .large-text { font-size: 1.25rem; }  
+    .small-text { font-size: 0.95rem; }   
+
+    
+    #storage-warning { display: none; background: #fff4e5; color: #663300; border: 1px solid #ffd8a8; padding: 0.6rem 0.9rem; border-radius: 8px; margin-bottom: 1rem; }
+
+    
+    .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; }
+    .gallery img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; background: #f0f0f0; display: block; }
+
+    
+    .loading-placeholder { filter: blur(4px) brightness(0.95); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Адаптивті мәтін және кескіндерді жалқау (lazy) жүктеу</h1>
+    <p class="card">Бұл файл екі тапсырманы біріктіреді: экран өлшеміне қарай мәтін кластарын ауыстыру және кескіндерді тек көрінген кезде жүктеу.</p>
+  </header>
+
+  <div id="storage-warning" role="alert">Сіздің браузеріңіз localStorage-ты қолдамайды немесе оған рұқсат жоқ — кейбір баптаулар сақталмауы мүмкін.</div>
+
+  <section class="card">
+    <h2>Қазіргі режим</h2>
+    <p id="mode-desc">---</p>
+    <p class="note">Терезе өлшемін өзгертсеңіз, мәтіннің мөлшері автоматты түрде өзгереді (800px шегінде).</p>
+  </section>
+
+  <section class="card">
+    <h2>Кескіндер галереясы (жүктеу тек көрінген кезде)</h2>
+    <p>Төмендегі суреттер бастапқыда жүктелмейді. Олар көрініске жақындағанда ғана жүктеледі.</p>
+
+    <div class="gallery" id="gallery">
+      
+      <img data-src="https://picsum.photos/id/1015/600/400" alt="Сурет 1" loading="lazy" class="lazy loading-placeholder">
+      <img data-src="https://picsum.photos/id/1016/600/400" alt="Сурет 2" loading="lazy" class="lazy loading-placeholder">
+      <img data-src="https://picsum.photos/id/1025/600/400" alt="Сурет 3" loading="lazy" class="lazy loading-placeholder">
+      <img data-src="https://picsum.photos/id/1035/600/400" alt="Сурет 4" loading="lazy" class="lazy loading-placeholder">
+      <img data-src="https://picsum.photos/id/1043/600/400" alt="Сурет 5" loading="lazy" class="lazy loading-placeholder">
+      <img data-src="https://picsum.photos/id/1052/600/400" alt="Сурет 6" loading="lazy" class="lazy loading-placeholder">
+    </div>
+  </section>
+
+  <script>
+   
+    (function () {
+      const THRESHOLD = 800; 
+      const root = document.documentElement; 
+      const modeDesc = document.getElementById('mode-desc');
+
+      function applyTextSize() {
+        const w = window.innerWidth;
+        if (w > THRESHOLD) {
+          root.classList.remove('small-text');
+          root.classList.add('large-text');
+          modeDesc.textContent = `Үлкен экран режимі — ${w}px (> ${THRESHOLD}px)`;
+        } else {
+          root.classList.remove('large-text');
+          root.classList.add('small-text');
+          modeDesc.textContent = `Кіші экран режимі — ${w}px (≤ ${THRESHOLD}px)`;
+        }
+
+        
+        try {
+          if (window.localStorage) {
+            localStorage.setItem('preferredTextSize', w > THRESHOLD ? 'large' : 'small');
+          }
+        } catch (e) {
+          
+        }
+      }
+
+      
+      applyTextSize();
+      window.addEventListener('resize', debounce(applyTextSize, 120));
+
+      
+      function debounce(fn, wait) {
+        let t = null;
+        return function (...args) {
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(this, args), wait);
+        };
+      }
+    })();
+
+    
+    (function () {
+      
+      const storageWarning = document.getElementById('storage-warning');
+      let hasLocalStorage = false;
+      try {
+        
+        const key = '__storage_test__';
+        window.localStorage.setItem(key, 'ok');
+        window.localStorage.removeItem(key);
+        hasLocalStorage = true;
+      } catch (e) {
+        hasLocalStorage = false;
+      }
+
+      if (!hasLocalStorage) {
+        storageWarning.style.display = 'block';
+      }
+
+      
+      const lazyImgs = new Set(document.querySelectorAll('img.lazy'));
+
+      function loadImage(img) {
+        const src = img.getAttribute('data-src');
+        if (!src) return;
+        img.src = src;
+        img.removeAttribute('data-src');
+        img.classList.remove('loading-placeholder');
+        img.classList.remove('lazy');
+      }
+
+      
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries, observer) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+              loadImage(img);
+              observer.unobserve(img);
+            }
+          }
+        }, { root: null, rootMargin: '200px', threshold: 0.01 });
+
+        lazyImgs.forEach(img => io.observe(img));
+
+      } else {
+        
+        const check = debounce(function () {
+          const viewportTop = window.scrollY;
+          const viewportBottom = viewportTop + window.innerHeight;
+          lazyImgs.forEach(img => {
+            const rect = img.getBoundingClientRect();
+            const imgTop = rect.top + window.scrollY;
+            const imgBottom = imgTop + rect.height;
+            
+            if (imgBottom >= viewportTop - 200 && imgTop <= viewportBottom + 200) {
+              loadImage(img);
+              lazyImgs.delete(img);
+            }
+          });
+
+         
+          if (lazyImgs.size === 0) {
+            window.removeEventListener('scroll', check);
+            window.removeEventListener('resize', check);
+          }
+        }, 150);
+
+        window.addEventListener('scroll', check);
+        window.addEventListener('resize', check);
+        
+        check();
+      }
+
+      if ('MutationObserver' in window) {
+        const mo = new MutationObserver(mutations => {
+          for (const m of mutations) {
+            for (const node of m.addedNodes) {
+              if (node.nodeType === 1 && node.tagName === 'IMG' && node.classList.contains('lazy')) {
+                
+                if ('IntersectionObserver' in window) {
+                  
+                  const io2 = new IntersectionObserver((entries, observer) => {
+                    for (const entry of entries) if (entry.isIntersecting) { loadImage(entry.target); observer.unobserve(entry.target); }
+                  }, { rootMargin: '200px' });
+                  io2.observe(node);
+                } else {
+                  
+                  lazyImgs.add(node);
+                }
+              }
+            }
+          }
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
+      }
+
+     
+      function debounce(fn, wait) {
+        let t = null;
+        return function (...args) {
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(this, args), wait);
+        };
+      }
+    })();
+  </script>
+</body>
+</html>
