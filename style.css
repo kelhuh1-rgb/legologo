@@ -83,3 +83,39 @@ footer{
         display: none;
     }
 }
+/* JS enable */
+body.js-enabled header a {
+    transition: 0.4s;
+}
+
+/* burger menu */
+.menu-open header a {
+    display: block;
+    opacity: 1;
+}
+
+header a {
+    opacity: 0;
+}
+
+header a.show {
+    opacity: 1;
+}
+
+/* card animation */
+.card {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: 0.6s ease;
+}
+
+.card.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+#Hero.compact {
+    padding: 20px;
+    background: #ddd;
+}
